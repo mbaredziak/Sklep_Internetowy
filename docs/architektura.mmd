@@ -1,0 +1,62 @@
+%%{init: {"theme": "default", "flowchart": {"curve": "basis"}}}%%
+flowchart TB
+    %% ===== AKTORZY =====
+    subgraph AKT["Aktorzy"]
+        GOSC(["👤 Gość"])
+        KLIENT(["👤 Klient"])
+        ADMIN(["👤 Administrator"])
+    end
+
+    %% ===== FRONTEND =====
+    subgraph FE["Frontend — Blazor WebAssembly (przeglądarka)"]
+        SKLEP["Sklep<br/>katalog, koszyk, zamówienia,<br/>profil, opinie"]
+        PANEL["Panel administratora<br/>produkty, kategorie,<br/>zamówienia, użytkownicy"]
+    end
+
+    %% ===== BACKEND =====
+    subgraph BE["Backend — ASP.NET Core Web API (.NET)"]
+        API["Warstwa API<br/>kontrolery REST, autoryzacja JWT,<br/>walidacja, OpenAPI"]
+        APP["Warstwa aplikacji<br/>serwisy: Katalog, Koszyk,<br/>Zamówienia, Płatności,<br/>Użytkownicy, Opinie"]
+        DOM["Warstwa domeny<br/>encje i reguły biznesowe<br/>Produkt, Zamówienie, Klient..."]
+        INF["Warstwa infrastruktury<br/>EF Core, ASP.NET Core Identity,<br/>klient bramki płatności, e-mail"]
+        API --> APP
+        APP --> DOM
+        APP --> INF
+    end
+
+    %% ===== DANE =====
+    subgraph DATA["Dane"]
+        DB[("PostgreSQL<br/>produkty, zamówienia,<br/>użytkownicy, opinie")]
+        FILES[("Magazyn plików<br/>zdjęcia produktów")]
+    end
+
+    %% ===== ZEWNĘTRZNE =====
+    subgraph EXT["Systemy zewnętrzne"]
+        PAY["System Płatności<br/>PayU / Przelewy24"]
+        MAIL["Serwer e-mail (SMTP)<br/>powiadomienia"]
+    end
+
+    GOSC -->|HTTPS| SKLEP
+    KLIENT -->|HTTPS| SKLEP
+    ADMIN -->|HTTPS| PANEL
+
+    SKLEP -->|"REST / JSON (HTTPS)"| API
+    PANEL -->|"REST / JSON (HTTPS)"| API
+
+    INF -->|SQL| DB
+    INF -->|odczyt / zapis| FILES
+    INF -->|"utworzenie płatności (REST)"| PAY
+    PAY -.->|"powiadomienie o statusie (webhook)"| API
+    KLIENT -.->|"przekierowanie do płatności"| PAY
+    INF -->|SMTP| MAIL
+
+    classDef actor fill:#fff7e6,stroke:#d48806,color:#000
+    classDef fe fill:#e6f4ff,stroke:#1677ff,color:#000
+    classDef be fill:#f0f5ff,stroke:#2f54eb,color:#000
+    classDef data fill:#f6ffed,stroke:#389e0d,color:#000
+    classDef ext fill:#fff1f0,stroke:#cf1322,color:#000
+    class GOSC,KLIENT,ADMIN actor
+    class SKLEP,PANEL fe
+    class API,APP,DOM,INF be
+    class DB,FILES data
+    class PAY,MAIL ext
