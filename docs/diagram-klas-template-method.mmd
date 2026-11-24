@@ -1,0 +1,61 @@
+%%{init: {"theme": "default"}}%%
+classDiagram
+    direction TB
+
+    class OrderStatusChange {
+        <<abstract>>
+        -INotifier _notifier
+        +Execute(Order order) void
+        #NewStatus OrderStatus*
+        #AllowedFrom OrderStatus[]*
+        #EmailSubject(Order order) string*
+        #OnChange(Order order) void
+    }
+    note for OrderStatusChange "Execute() - metoda szablonowa:<br/>1. sprawdź AllowedFrom<br/>2. OnChange() - hook<br/>3. order.Status = NewStatus<br/>4. wyślij e-mail"
+
+    class PayOrder {
+        #NewStatus OrderStatus
+        #AllowedFrom OrderStatus[]
+        #EmailSubject(Order order) string
+    }
+    class ShipOrder {
+        #NewStatus OrderStatus
+        #AllowedFrom OrderStatus[]
+        #EmailSubject(Order order) string
+    }
+    class CancelOrder {
+        #NewStatus OrderStatus
+        #AllowedFrom OrderStatus[]
+        #EmailSubject(Order order) string
+        #OnChange(Order order) void
+    }
+
+    class INotifier {
+        <<interface>>
+        +Send(string to, string subject) void
+    }
+    class ConsoleNotifier {
+        +Send(string to, string subject) void
+    }
+
+    class Order {
+        +int Id
+        +string CustomerEmail
+        +OrderStatus Status
+        +bool RefundRequested
+    }
+    class OrderStatus {
+        <<enumeration>>
+        AwaitingPayment
+        Paid
+        Shipped
+        Cancelled
+    }
+
+    OrderStatusChange <|-- PayOrder
+    OrderStatusChange <|-- ShipOrder
+    OrderStatusChange <|-- CancelOrder
+    OrderStatusChange --> INotifier : używa
+    OrderStatusChange ..> Order : zmienia status
+    INotifier <|.. ConsoleNotifier
+    Order --> OrderStatus
